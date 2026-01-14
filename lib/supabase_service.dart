@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseService {
@@ -6,10 +7,7 @@ class SupabaseService {
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6dHh1dWtvYWh3a2twcWFudHl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0MTk1MzMsImV4cCI6MjA4MDk5NTUzM30.j8AOXcSJMr1tU_tLU2FOkxrxXwNIysVVv434NWaqXLo';
 
   static Future<void> initialize() async {
-    await Supabase.initialize(
-      url: supabaseUrl,
-      anonKey: supabaseAnonKey,
-    );
+    await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
   }
 
   static SupabaseClient get client => Supabase.instance.client;
@@ -38,18 +36,51 @@ class SupabaseService {
   }
 
   static Future<bool> signInWithGoogle() async {
+    // #region agent log
+    try {
+      final logFile = File(
+        '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
+      );
+      logFile.writeAsStringSync(
+        '${logFile.existsSync() ? logFile.readAsStringSync() : ""}{"id":"log_${DateTime.now().millisecondsSinceEpoch}","timestamp":${DateTime.now().millisecondsSinceEpoch},"location":"supabase_service.dart:signInWithGoogle","message":"Before signInWithOAuth","data":{},"sessionId":"debug-session","runId":"run1","hypothesisId":"5"}\n',
+        mode: FileMode.append,
+      );
+    } catch (_) {}
+    // #endregion
     try {
       final response = await client.auth.signInWithOAuth(
         OAuthProvider.google,
         redirectTo: 'com.example.app://login-callback',
         authScreenLaunchMode: LaunchMode.externalApplication,
       );
+      // #region agent log
+      try {
+        final logFile = File(
+          '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
+        );
+        logFile.writeAsStringSync(
+          '${logFile.existsSync() ? logFile.readAsStringSync() : ""}{"id":"log_${DateTime.now().millisecondsSinceEpoch}","timestamp":${DateTime.now().millisecondsSinceEpoch},"location":"supabase_service.dart:signInWithGoogle","message":"After signInWithOAuth","data":{"response":$response},"sessionId":"debug-session","runId":"run1","hypothesisId":"5"}\n',
+          mode: FileMode.append,
+        );
+      } catch (_) {}
+      // #endregion
       return response;
     } catch (e) {
+      // #region agent log
+      try {
+        final logFile = File(
+          '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
+        );
+        logFile.writeAsStringSync(
+          '${logFile.existsSync() ? logFile.readAsStringSync() : ""}{"id":"log_${DateTime.now().millisecondsSinceEpoch}","timestamp":${DateTime.now().millisecondsSinceEpoch},"location":"supabase_service.dart:signInWithGoogle","message":"Error in signInWithOAuth","data":{"error":"$e"},"sessionId":"debug-session","runId":"run1","hypothesisId":"5"}\n',
+          mode: FileMode.append,
+        );
+      } catch (_) {}
+      // #endregion
       rethrow;
     }
   }
 
-  static Stream<AuthState> get authStateChanges => client.auth.onAuthStateChange;
+  static Stream<AuthState> get authStateChanges =>
+      client.auth.onAuthStateChange;
 }
-

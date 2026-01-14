@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:app_links/app_links.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -19,6 +20,7 @@ class MainApp extends StatefulWidget {
 
 class _MainAppState extends State<MainApp> {
   final _appLinks = AppLinks();
+  final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
   StreamSubscription<Uri>? _linkSubscription;
   StreamSubscription<AuthState>? _authSubscription;
 
@@ -34,12 +36,38 @@ class _MainAppState extends State<MainApp> {
     _authSubscription = SupabaseService.authStateChanges.listen((
       AuthState state,
     ) {
-      if (state.event == AuthChangeEvent.signedIn && mounted) {
-        // Navigate to authenticated area when user signs in
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const FaceBook()),
-          (route) => false,
+      // #region agent log
+      try {
+        final logFile = File(
+          '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
         );
+        logFile.writeAsStringSync(
+          '${logFile.existsSync() ? logFile.readAsStringSync() : ""}{"id":"log_${DateTime.now().millisecondsSinceEpoch}","timestamp":${DateTime.now().millisecondsSinceEpoch},"location":"main.dart:_initAuthListener","message":"Auth state changed","data":{"event":"${state.event}","sessionExists":${SupabaseService.isLoggedIn}},"sessionId":"debug-session","runId":"run1","hypothesisId":"4"}\n',
+          mode: FileMode.append,
+        );
+      } catch (_) {}
+      // #endregion
+      if (state.event == AuthChangeEvent.signedIn) {
+        // #region agent log
+        try {
+          final logFile = File(
+            '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
+          );
+          logFile.writeAsStringSync(
+            '${logFile.existsSync() ? logFile.readAsStringSync() : ""}{"id":"log_${DateTime.now().millisecondsSinceEpoch}","timestamp":${DateTime.now().millisecondsSinceEpoch},"location":"main.dart:_initAuthListener","message":"Navigating after sign in","data":{"mounted":$mounted,"navigatorKeyExists":${navigatorKey.currentState != null}},"sessionId":"debug-session","runId":"run1","hypothesisId":"4"}\n',
+            mode: FileMode.append,
+          );
+        } catch (_) {}
+        // #endregion
+        // Use navigatorKey to navigate from any context
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (navigatorKey.currentState != null && SupabaseService.isLoggedIn) {
+            navigatorKey.currentState!.pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const FaceBook()),
+              (route) => false,
+            );
+          }
+        });
       }
     });
   }
@@ -48,9 +76,31 @@ class _MainAppState extends State<MainApp> {
     // Handle deep links when app is already running
     _linkSubscription = _appLinks.uriLinkStream.listen(
       (Uri uri) {
+        // #region agent log
+        try {
+          final logFile = File(
+            '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
+          );
+          logFile.writeAsStringSync(
+            '${logFile.existsSync() ? logFile.readAsStringSync() : ""}{"id":"log_${DateTime.now().millisecondsSinceEpoch}","timestamp":${DateTime.now().millisecondsSinceEpoch},"location":"main.dart:_initDeepLinks","message":"Deep link received","data":{"uri":"${uri.toString()}","scheme":"${uri.scheme}","host":"${uri.host}"},"sessionId":"debug-session","runId":"run1","hypothesisId":"2"}\n',
+            mode: FileMode.append,
+          );
+        } catch (_) {}
+        // #endregion
         _handleDeepLink(uri);
       },
       onError: (err) {
+        // #region agent log
+        try {
+          final logFile = File(
+            '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
+          );
+          logFile.writeAsStringSync(
+            '${logFile.existsSync() ? logFile.readAsStringSync() : ""}{"id":"log_${DateTime.now().millisecondsSinceEpoch}","timestamp":${DateTime.now().millisecondsSinceEpoch},"location":"main.dart:_initDeepLinks","message":"Deep link error","data":{"error":"$err"},"sessionId":"debug-session","runId":"run1","hypothesisId":"2"}\n',
+            mode: FileMode.append,
+          );
+        } catch (_) {}
+        // #endregion
         print('Deep link error: $err');
       },
     );
@@ -58,34 +108,104 @@ class _MainAppState extends State<MainApp> {
     // Handle deep link when app is opened from terminated state
     _appLinks.getInitialLink().then((Uri? uri) {
       if (uri != null) {
+        // #region agent log
+        try {
+          final logFile = File(
+            '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
+          );
+          logFile.writeAsStringSync(
+            '${logFile.existsSync() ? logFile.readAsStringSync() : ""}{"id":"log_${DateTime.now().millisecondsSinceEpoch}","timestamp":${DateTime.now().millisecondsSinceEpoch},"location":"main.dart:_initDeepLinks","message":"Initial deep link received","data":{"uri":"${uri.toString()}"},"sessionId":"debug-session","runId":"run1","hypothesisId":"2"}\n',
+            mode: FileMode.append,
+          );
+        } catch (_) {}
+        // #endregion
         _handleDeepLink(uri);
       }
     });
   }
 
   void _handleDeepLink(Uri uri) async {
+    // #region agent log
+    try {
+      final logFile = File(
+        '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
+      );
+      logFile.writeAsStringSync(
+        '${logFile.existsSync() ? logFile.readAsStringSync() : ""}{"id":"log_${DateTime.now().millisecondsSinceEpoch}","timestamp":${DateTime.now().millisecondsSinceEpoch},"location":"main.dart:_handleDeepLink","message":"Handling deep link","data":{"uri":"${uri.toString()}","scheme":"${uri.scheme}","host":"${uri.host}","matches":${uri.scheme == 'com.example.app' && uri.host == 'login-callback'}},"sessionId":"debug-session","runId":"run1","hypothesisId":"2"}\n',
+        mode: FileMode.append,
+      );
+    } catch (_) {}
+    // #endregion
     if (uri.scheme == 'com.example.app' && uri.host == 'login-callback') {
       try {
+        // #region agent log
+        try {
+          final logFile = File(
+            '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
+          );
+          logFile.writeAsStringSync(
+            '${logFile.existsSync() ? logFile.readAsStringSync() : ""}{"id":"log_${DateTime.now().millisecondsSinceEpoch}","timestamp":${DateTime.now().millisecondsSinceEpoch},"location":"main.dart:_handleDeepLink","message":"Before getSessionFromUrl","data":{"isLoggedIn":${SupabaseService.isLoggedIn}},"sessionId":"debug-session","runId":"run1","hypothesisId":"3"}\n',
+            mode: FileMode.append,
+          );
+        } catch (_) {}
+        // #endregion
         // Process the OAuth callback URL with Supabase
         // Supabase will extract tokens from the URL and set the session
         await SupabaseService.client.auth.getSessionFromUrl(uri);
+        // #region agent log
+        try {
+          final logFile = File(
+            '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
+          );
+          logFile.writeAsStringSync(
+            '${logFile.existsSync() ? logFile.readAsStringSync() : ""}{"id":"log_${DateTime.now().millisecondsSinceEpoch}","timestamp":${DateTime.now().millisecondsSinceEpoch},"location":"main.dart:_handleDeepLink","message":"After getSessionFromUrl","data":{"isLoggedIn":${SupabaseService.isLoggedIn},"mounted":$mounted},"sessionId":"debug-session","runId":"run1","hypothesisId":"3"}\n',
+            mode: FileMode.append,
+          );
+        } catch (_) {}
+        // #endregion
 
         // Session is set, auth state listener will handle navigation
-        // But we can also navigate directly here
-        if (mounted && SupabaseService.isLoggedIn) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const FaceBook()),
-            (route) => false,
-          );
+        // But we can also navigate directly here using navigatorKey
+        if (SupabaseService.isLoggedIn) {
+          // #region agent log
+          try {
+            final logFile = File(
+              '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
+            );
+            logFile.writeAsStringSync(
+              '${logFile.existsSync() ? logFile.readAsStringSync() : ""}{"id":"log_${DateTime.now().millisecondsSinceEpoch}","timestamp":${DateTime.now().millisecondsSinceEpoch},"location":"main.dart:_handleDeepLink","message":"Navigating from deep link handler","data":{"navigatorKeyExists":${navigatorKey.currentState != null}},"sessionId":"debug-session","runId":"run1","hypothesisId":"3"}\n',
+              mode: FileMode.append,
+            );
+          } catch (_) {}
+          // #endregion
+          if (navigatorKey.currentState != null) {
+            navigatorKey.currentState!.pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const FaceBook()),
+              (route) => false,
+            );
+          }
         }
       } catch (error) {
+        // #region agent log
+        try {
+          final logFile = File(
+            '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
+          );
+          logFile.writeAsStringSync(
+            '${logFile.existsSync() ? logFile.readAsStringSync() : ""}{"id":"log_${DateTime.now().millisecondsSinceEpoch}","timestamp":${DateTime.now().millisecondsSinceEpoch},"location":"main.dart:_handleDeepLink","message":"Error in getSessionFromUrl","data":{"error":"$error","isLoggedIn":${SupabaseService.isLoggedIn}},"sessionId":"debug-session","runId":"run1","hypothesisId":"3"}\n',
+            mode: FileMode.append,
+          );
+        } catch (_) {}
+        // #endregion
         print('Error handling deep link: $error');
         // Fallback: check if user is logged in anyway
-        if (SupabaseService.isLoggedIn && mounted) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const FaceBook()),
-            (route) => false,
-          );
+        if (SupabaseService.isLoggedIn) {
+          if (navigatorKey.currentState != null) {
+            navigatorKey.currentState!.pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const FaceBook()),
+              (route) => false,
+            );
+          }
         }
       }
     }
@@ -101,6 +221,7 @@ class _MainAppState extends State<MainApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       home: HomeScreen(), // separate widget
     );
   }
@@ -141,16 +262,58 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends State<LoginPage> with WidgetsBindingObserver {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  StreamSubscription<AuthState>? _authSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // Listen to auth state changes to reset loading and navigate
+    _authSubscription = SupabaseService.authStateChanges.listen((
+      AuthState state,
+    ) {
+      if (state.event == AuthChangeEvent.signedIn && mounted) {
+        setState(() => _isLoading = false);
+        // Navigation will be handled by MainApp's auth listener
+      }
+    });
+    // Check if already logged in when page loads
+    if (SupabaseService.isLoggedIn) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const FaceBook()),
+          );
+        }
+      });
+    }
+  }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _authSubscription?.cancel();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // When app resumes, check if user is logged in
+    if (state == AppLifecycleState.resumed && mounted) {
+      if (SupabaseService.isLoggedIn) {
+        setState(() => _isLoading = false);
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const FaceBook()),
+        );
+      }
+    }
   }
 
   Future<void> _login() async {
@@ -311,16 +474,59 @@ class CreateAccountPage extends StatefulWidget {
   State<CreateAccountPage> createState() => _CreateAccountPageState();
 }
 
-class _CreateAccountPageState extends State<CreateAccountPage> {
+class _CreateAccountPageState extends State<CreateAccountPage>
+    with WidgetsBindingObserver {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  StreamSubscription<AuthState>? _authSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // Listen to auth state changes to reset loading and navigate
+    _authSubscription = SupabaseService.authStateChanges.listen((
+      AuthState state,
+    ) {
+      if (state.event == AuthChangeEvent.signedIn && mounted) {
+        setState(() => _isLoading = false);
+        // Navigation will be handled by MainApp's auth listener
+      }
+    });
+    // Check if already logged in when page loads
+    if (SupabaseService.isLoggedIn) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const FaceBook()),
+          );
+        }
+      });
+    }
+  }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _authSubscription?.cancel();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // When app resumes, check if user is logged in
+    if (state == AppLifecycleState.resumed && mounted) {
+      if (SupabaseService.isLoggedIn) {
+        setState(() => _isLoading = false);
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const FaceBook()),
+        );
+      }
+    }
   }
 
   Future<void> _createAccount() async {
@@ -361,12 +567,73 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
   }
 
   Future<void> _signInWithGoogle() async {
+    // #region agent log
+    try {
+      final logFile = File(
+        '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
+      );
+      logFile.writeAsStringSync(
+        '${logFile.existsSync() ? logFile.readAsStringSync() : ""}{"id":"log_${DateTime.now().millisecondsSinceEpoch}","timestamp":${DateTime.now().millisecondsSinceEpoch},"location":"main.dart:CreateAccountPage._signInWithGoogle","message":"Starting Google sign-in","data":{"isLoading":$_isLoading},"sessionId":"debug-session","runId":"run1","hypothesisId":"1,5"}\n',
+        mode: FileMode.append,
+      );
+    } catch (_) {}
+    // #endregion
     setState(() => _isLoading = true);
 
     try {
-      await SupabaseService.signInWithGoogle();
+      // #region agent log
+      try {
+        final logFile = File(
+          '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
+        );
+        logFile.writeAsStringSync(
+          '${logFile.existsSync() ? logFile.readAsStringSync() : ""}{"id":"log_${DateTime.now().millisecondsSinceEpoch}","timestamp":${DateTime.now().millisecondsSinceEpoch},"location":"main.dart:CreateAccountPage._signInWithGoogle","message":"Before signInWithGoogle call","data":{},"sessionId":"debug-session","runId":"run1","hypothesisId":"5"}\n',
+          mode: FileMode.append,
+        );
+      } catch (_) {}
+      // #endregion
+      final response = await SupabaseService.signInWithGoogle();
+      // #region agent log
+      try {
+        final logFile = File(
+          '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
+        );
+        logFile.writeAsStringSync(
+          '${logFile.existsSync() ? logFile.readAsStringSync() : ""}{"id":"log_${DateTime.now().millisecondsSinceEpoch}","timestamp":${DateTime.now().millisecondsSinceEpoch},"location":"main.dart:CreateAccountPage._signInWithGoogle","message":"After signInWithGoogle call","data":{"response":$response},"sessionId":"debug-session","runId":"run1","hypothesisId":"1,5"}\n',
+          mode: FileMode.append,
+        );
+      } catch (_) {}
+      // #endregion
       // The navigation will happen when the deep link callback is processed
+      // Set a timeout to reset loading state if callback doesn't arrive
+      Future.delayed(const Duration(seconds: 30), () {
+        if (mounted && _isLoading) {
+          // #region agent log
+          try {
+            final logFile = File(
+              '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
+            );
+            logFile.writeAsStringSync(
+              '${logFile.existsSync() ? logFile.readAsStringSync() : ""}{"id":"log_${DateTime.now().millisecondsSinceEpoch}","timestamp":${DateTime.now().millisecondsSinceEpoch},"location":"main.dart:CreateAccountPage._signInWithGoogle","message":"Timeout: resetting loading state","data":{"isLoggedIn":${SupabaseService.isLoggedIn}},"sessionId":"debug-session","runId":"run1","hypothesisId":"1"}\n',
+              mode: FileMode.append,
+            );
+          } catch (_) {}
+          // #endregion
+          setState(() => _isLoading = false);
+        }
+      });
     } catch (e) {
+      // #region agent log
+      try {
+        final logFile = File(
+          '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
+        );
+        logFile.writeAsStringSync(
+          '${logFile.existsSync() ? logFile.readAsStringSync() : ""}{"id":"log_${DateTime.now().millisecondsSinceEpoch}","timestamp":${DateTime.now().millisecondsSinceEpoch},"location":"main.dart:CreateAccountPage._signInWithGoogle","message":"Error in signInWithGoogle","data":{"error":"$e"},"sessionId":"debug-session","runId":"run1","hypothesisId":"5"}\n',
+          mode: FileMode.append,
+        );
+      } catch (_) {}
+      // #endregion
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
