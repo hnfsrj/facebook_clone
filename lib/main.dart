@@ -227,31 +227,38 @@ class _MainAppState extends State<MainApp> {
   }
 }
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Auto-proceed after 2 seconds
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        if (SupabaseService.isLoggedIn) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const FaceBook()),
+          );
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginPage()),
+          );
+        }
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: IconButton(
-          onPressed: () {
-            if (SupabaseService.isLoggedIn) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const FaceBook()),
-              );
-            } else {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginPage()),
-              );
-            }
-          },
-          icon: Icon(Icons.facebook, size: 60),
-        ),
-      ),
-    );
+    return Scaffold(body: Center(child: Icon(Icons.facebook, size: 60)));
   }
 }
 
