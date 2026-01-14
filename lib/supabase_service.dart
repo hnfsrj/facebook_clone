@@ -37,6 +37,19 @@ class SupabaseService {
     await client.auth.signOut();
   }
 
+  static Future<bool> signInWithGoogle() async {
+    try {
+      final response = await client.auth.signInWithOAuth(
+        OAuthProvider.google,
+        redirectTo: 'com.example.app://login-callback',
+        authScreenLaunchMode: LaunchMode.externalApplication,
+      );
+      return response;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   static Stream<AuthState> get authStateChanges => client.auth.onAuthStateChange;
 }
 

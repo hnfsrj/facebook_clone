@@ -1,4 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:app_links/app_links.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_service.dart';
 
 void main() async {
@@ -7,8 +10,93 @@ void main() async {
   runApp(MainApp());
 }
 
-class MainApp extends StatelessWidget {
+class MainApp extends StatefulWidget {
   const MainApp({super.key});
+
+  @override
+  State<MainApp> createState() => _MainAppState();
+}
+
+class _MainAppState extends State<MainApp> {
+  final _appLinks = AppLinks();
+  StreamSubscription<Uri>? _linkSubscription;
+  StreamSubscription<AuthState>? _authSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _initDeepLinks();
+    _initAuthListener();
+  }
+
+  void _initAuthListener() {
+    // Listen to auth state changes to handle OAuth callbacks
+    _authSubscription = SupabaseService.authStateChanges.listen((
+      AuthState state,
+    ) {
+      if (state.event == AuthChangeEvent.signedIn && mounted) {
+        // Navigate to authenticated area when user signs in
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const FaceBook()),
+          (route) => false,
+        );
+      }
+    });
+  }
+
+  void _initDeepLinks() {
+    // Handle deep links when app is already running
+    _linkSubscription = _appLinks.uriLinkStream.listen(
+      (Uri uri) {
+        _handleDeepLink(uri);
+      },
+      onError: (err) {
+        print('Deep link error: $err');
+      },
+    );
+
+    // Handle deep link when app is opened from terminated state
+    _appLinks.getInitialLink().then((Uri? uri) {
+      if (uri != null) {
+        _handleDeepLink(uri);
+      }
+    });
+  }
+
+  void _handleDeepLink(Uri uri) async {
+    if (uri.scheme == 'com.example.app' && uri.host == 'login-callback') {
+      try {
+        // Process the OAuth callback URL with Supabase
+        // Supabase will extract tokens from the URL and set the session
+        await SupabaseService.client.auth.getSessionFromUrl(uri);
+
+        // Session is set, auth state listener will handle navigation
+        // But we can also navigate directly here
+        if (mounted && SupabaseService.isLoggedIn) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const FaceBook()),
+            (route) => false,
+          );
+        }
+      } catch (error) {
+        print('Error handling deep link: $error');
+        // Fallback: check if user is logged in anyway
+        if (SupabaseService.isLoggedIn && mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const FaceBook()),
+            (route) => false,
+          );
+        }
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    _authSubscription?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -102,6 +190,22 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  Future<void> _signInWithGoogle() async {
+    setState(() => _isLoading = true);
+
+    try {
+      await SupabaseService.signInWithGoogle();
+      // The navigation will happen when the deep link callback is processed
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Google sign-in failed: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -146,6 +250,38 @@ class _LoginPageState extends State<LoginPage> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Text('Log in'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(child: Divider()),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Text(
+                      'OR',
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                  ),
+                  Expanded(child: Divider()),
+                ],
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 48,
+                child: OutlinedButton.icon(
+                  onPressed: _isLoading ? null : _signInWithGoogle,
+                  icon: Image.asset(
+                    'assets/images/google_logo.png',
+                    height: 20,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Icon(Icons.g_mobiledata, size: 24);
+                    },
+                  ),
+                  label: const Text('Sign in with Google'),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.grey[300]!),
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -224,6 +360,22 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
     }
   }
 
+  Future<void> _signInWithGoogle() async {
+    setState(() => _isLoading = true);
+
+    try {
+      await SupabaseService.signInWithGoogle();
+      // The navigation will happen when the deep link callback is processed
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Google sign-in failed: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -268,6 +420,38 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Text('Create account'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(child: Divider()),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Text(
+                      'OR',
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                  ),
+                  Expanded(child: Divider()),
+                ],
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 48,
+                child: OutlinedButton.icon(
+                  onPressed: _isLoading ? null : _signInWithGoogle,
+                  icon: Image.asset(
+                    'assets/images/google_logo.png',
+                    height: 20,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Icon(Icons.g_mobiledata, size: 24);
+                    },
+                  ),
+                  label: const Text('Sign in with Google'),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.grey[300]!),
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
