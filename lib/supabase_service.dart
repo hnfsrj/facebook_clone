@@ -36,7 +36,6 @@ class SupabaseService {
   }
 
   static Future<bool> signInWithGoogle() async {
-    // #region agent log
     try {
       final logFile = File(
         '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
@@ -46,14 +45,12 @@ class SupabaseService {
         mode: FileMode.append,
       );
     } catch (_) {}
-    // #endregion
     try {
       final response = await client.auth.signInWithOAuth(
         OAuthProvider.google,
         redirectTo: 'com.example.app://login-callback',
         authScreenLaunchMode: LaunchMode.externalApplication,
       );
-      // #region agent log
       try {
         final logFile = File(
           '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
@@ -63,10 +60,8 @@ class SupabaseService {
           mode: FileMode.append,
         );
       } catch (_) {}
-      // #endregion
       return response;
     } catch (e) {
-      // #region agent log
       try {
         final logFile = File(
           '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
@@ -76,7 +71,6 @@ class SupabaseService {
           mode: FileMode.append,
         );
       } catch (_) {}
-      // #endregion
       rethrow;
     }
   }

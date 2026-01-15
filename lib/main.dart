@@ -32,11 +32,9 @@ class _MainAppState extends State<MainApp> {
   }
 
   void _initAuthListener() {
-    // Listen to auth state changes to handle OAuth callbacks
     _authSubscription = SupabaseService.authStateChanges.listen((
       AuthState state,
     ) {
-      // #region agent log
       try {
         final logFile = File(
           '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
@@ -46,9 +44,7 @@ class _MainAppState extends State<MainApp> {
           mode: FileMode.append,
         );
       } catch (_) {}
-      // #endregion
       if (state.event == AuthChangeEvent.signedIn) {
-        // #region agent log
         try {
           final logFile = File(
             '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
@@ -58,8 +54,6 @@ class _MainAppState extends State<MainApp> {
             mode: FileMode.append,
           );
         } catch (_) {}
-        // #endregion
-        // Use navigatorKey to navigate from any context
         Future.delayed(const Duration(milliseconds: 100), () {
           if (navigatorKey.currentState != null && SupabaseService.isLoggedIn) {
             navigatorKey.currentState!.pushAndRemoveUntil(
@@ -73,10 +67,8 @@ class _MainAppState extends State<MainApp> {
   }
 
   void _initDeepLinks() {
-    // Handle deep links when app is already running
     _linkSubscription = _appLinks.uriLinkStream.listen(
       (Uri uri) {
-        // #region agent log
         try {
           final logFile = File(
             '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
@@ -86,11 +78,9 @@ class _MainAppState extends State<MainApp> {
             mode: FileMode.append,
           );
         } catch (_) {}
-        // #endregion
         _handleDeepLink(uri);
       },
       onError: (err) {
-        // #region agent log
         try {
           final logFile = File(
             '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
@@ -100,15 +90,12 @@ class _MainAppState extends State<MainApp> {
             mode: FileMode.append,
           );
         } catch (_) {}
-        // #endregion
         print('Deep link error: $err');
       },
     );
 
-    // Handle deep link when app is opened from terminated state
     _appLinks.getInitialLink().then((Uri? uri) {
       if (uri != null) {
-        // #region agent log
         try {
           final logFile = File(
             '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
@@ -118,14 +105,12 @@ class _MainAppState extends State<MainApp> {
             mode: FileMode.append,
           );
         } catch (_) {}
-        // #endregion
         _handleDeepLink(uri);
       }
     });
   }
 
   void _handleDeepLink(Uri uri) async {
-    // #region agent log
     try {
       final logFile = File(
         '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
@@ -135,10 +120,8 @@ class _MainAppState extends State<MainApp> {
         mode: FileMode.append,
       );
     } catch (_) {}
-    // #endregion
     if (uri.scheme == 'com.example.app' && uri.host == 'login-callback') {
       try {
-        // #region agent log
         try {
           final logFile = File(
             '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
@@ -148,11 +131,7 @@ class _MainAppState extends State<MainApp> {
             mode: FileMode.append,
           );
         } catch (_) {}
-        // #endregion
-        // Process the OAuth callback URL with Supabase
-        // Supabase will extract tokens from the URL and set the session
         await SupabaseService.client.auth.getSessionFromUrl(uri);
-        // #region agent log
         try {
           final logFile = File(
             '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
@@ -162,12 +141,8 @@ class _MainAppState extends State<MainApp> {
             mode: FileMode.append,
           );
         } catch (_) {}
-        // #endregion
 
-        // Session is set, auth state listener will handle navigation
-        // But we can also navigate directly here using navigatorKey
         if (SupabaseService.isLoggedIn) {
-          // #region agent log
           try {
             final logFile = File(
               '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
@@ -177,7 +152,6 @@ class _MainAppState extends State<MainApp> {
               mode: FileMode.append,
             );
           } catch (_) {}
-          // #endregion
           if (navigatorKey.currentState != null) {
             navigatorKey.currentState!.pushAndRemoveUntil(
               MaterialPageRoute(builder: (context) => const FaceBook()),
@@ -186,7 +160,6 @@ class _MainAppState extends State<MainApp> {
           }
         }
       } catch (error) {
-        // #region agent log
         try {
           final logFile = File(
             '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
@@ -196,9 +169,7 @@ class _MainAppState extends State<MainApp> {
             mode: FileMode.append,
           );
         } catch (_) {}
-        // #endregion
         print('Error handling deep link: $error');
-        // Fallback: check if user is logged in anyway
         if (SupabaseService.isLoggedIn) {
           if (navigatorKey.currentState != null) {
             navigatorKey.currentState!.pushAndRemoveUntil(
@@ -220,10 +191,7 @@ class _MainAppState extends State<MainApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: navigatorKey,
-      home: HomeScreen(), // separate widget
-    );
+    return MaterialApp(navigatorKey: navigatorKey, home: HomeScreen());
   }
 }
 
@@ -238,7 +206,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Auto-proceed after 2 seconds
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
         if (SupabaseService.isLoggedIn) {
@@ -279,16 +246,13 @@ class _LoginPageState extends State<LoginPage> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Listen to auth state changes to reset loading and navigate
     _authSubscription = SupabaseService.authStateChanges.listen((
       AuthState state,
     ) {
       if (state.event == AuthChangeEvent.signedIn && mounted) {
         setState(() => _isLoading = false);
-        // Navigation will be handled by MainApp's auth listener
       }
     });
-    // Check if already logged in when page loads
     if (SupabaseService.isLoggedIn) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -312,7 +276,6 @@ class _LoginPageState extends State<LoginPage> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    // When app resumes, check if user is logged in
     if (state == AppLifecycleState.resumed && mounted) {
       if (SupabaseService.isLoggedIn) {
         setState(() => _isLoading = false);
@@ -365,7 +328,6 @@ class _LoginPageState extends State<LoginPage> with WidgetsBindingObserver {
 
     try {
       await SupabaseService.signInWithGoogle();
-      // The navigation will happen when the deep link callback is processed
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -492,16 +454,13 @@ class _CreateAccountPageState extends State<CreateAccountPage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Listen to auth state changes to reset loading and navigate
     _authSubscription = SupabaseService.authStateChanges.listen((
       AuthState state,
     ) {
       if (state.event == AuthChangeEvent.signedIn && mounted) {
         setState(() => _isLoading = false);
-        // Navigation will be handled by MainApp's auth listener
       }
     });
-    // Check if already logged in when page loads
     if (SupabaseService.isLoggedIn) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -525,7 +484,6 @@ class _CreateAccountPageState extends State<CreateAccountPage>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    // When app resumes, check if user is logged in
     if (state == AppLifecycleState.resumed && mounted) {
       if (SupabaseService.isLoggedIn) {
         setState(() => _isLoading = false);
@@ -574,7 +532,6 @@ class _CreateAccountPageState extends State<CreateAccountPage>
   }
 
   Future<void> _signInWithGoogle() async {
-    // #region agent log
     try {
       final logFile = File(
         '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
@@ -584,11 +541,9 @@ class _CreateAccountPageState extends State<CreateAccountPage>
         mode: FileMode.append,
       );
     } catch (_) {}
-    // #endregion
     setState(() => _isLoading = true);
 
     try {
-      // #region agent log
       try {
         final logFile = File(
           '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
@@ -598,9 +553,7 @@ class _CreateAccountPageState extends State<CreateAccountPage>
           mode: FileMode.append,
         );
       } catch (_) {}
-      // #endregion
       final response = await SupabaseService.signInWithGoogle();
-      // #region agent log
       try {
         final logFile = File(
           '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
@@ -610,12 +563,8 @@ class _CreateAccountPageState extends State<CreateAccountPage>
           mode: FileMode.append,
         );
       } catch (_) {}
-      // #endregion
-      // The navigation will happen when the deep link callback is processed
-      // Set a timeout to reset loading state if callback doesn't arrive
       Future.delayed(const Duration(seconds: 30), () {
         if (mounted && _isLoading) {
-          // #region agent log
           try {
             final logFile = File(
               '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
@@ -625,12 +574,10 @@ class _CreateAccountPageState extends State<CreateAccountPage>
               mode: FileMode.append,
             );
           } catch (_) {}
-          // #endregion
           setState(() => _isLoading = false);
         }
       });
     } catch (e) {
-      // #region agent log
       try {
         final logFile = File(
           '/home/kushna/Desktop/class/flutter/app/.cursor/debug.log',
@@ -640,7 +587,6 @@ class _CreateAccountPageState extends State<CreateAccountPage>
           mode: FileMode.append,
         );
       } catch (_) {}
-      // #endregion
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1136,7 +1082,6 @@ class FriendsPage extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // Top Navigation Bar
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               child: Row(
@@ -1197,7 +1142,6 @@ class FriendsPage extends StatelessWidget {
               ),
             ),
 
-            // Navigation Bar
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6),
               child: Row(
@@ -1235,13 +1179,11 @@ class FriendsPage extends StatelessWidget {
             ),
             const Divider(height: 1, thickness: 0.6),
 
-            // Friends Page Content
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Header with Friends title and search
                     Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 14,
@@ -1262,7 +1204,6 @@ class FriendsPage extends StatelessWidget {
                       ),
                     ),
 
-                    // Filter Buttons
                     Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 14,
@@ -1313,7 +1254,6 @@ class FriendsPage extends StatelessWidget {
 
                     const SizedBox(height: 16),
 
-                    // People you may know section
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 14),
                       child: Text(
@@ -1327,7 +1267,6 @@ class FriendsPage extends StatelessWidget {
 
                     const SizedBox(height: 12),
 
-                    // People List
                     _PersonCard(name: 'abebe beso'),
                     _PersonCard(name: 'abebe beso'),
                     _PersonCard(name: 'abebe beso'),
@@ -1417,7 +1356,6 @@ class NotificationsPage extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // Top Navigation Bar
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               child: Row(
@@ -1478,7 +1416,6 @@ class NotificationsPage extends StatelessWidget {
               ),
             ),
 
-            // Navigation Bar
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6),
               child: Row(
@@ -1519,13 +1456,11 @@ class NotificationsPage extends StatelessWidget {
             ),
             const Divider(height: 1, thickness: 0.6),
 
-            // Notifications Page Content
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Header with Notifications title, back arrow, checkmark, and search
                     Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 14,
@@ -1575,7 +1510,6 @@ class NotificationsPage extends StatelessWidget {
                       ),
                     ),
 
-                    // New label
                     const Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: 14,
@@ -1593,7 +1527,6 @@ class NotificationsPage extends StatelessWidget {
 
                     const SizedBox(height: 8),
 
-                    // Notifications List
                     _NotificationCard(
                       name: 'abebe beso',
                       text:
@@ -1672,7 +1605,6 @@ class _NotificationCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Avatar with Facebook icon overlay
           Stack(
             children: [
               const CircleAvatar(
